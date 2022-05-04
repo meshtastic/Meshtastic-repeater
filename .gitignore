@@ -4,3 +4,5 @@
 .vscode/launch.json
 .vscode/ipch
 /nanopb*
+*.pyc
+/.vscode/extensions.json
