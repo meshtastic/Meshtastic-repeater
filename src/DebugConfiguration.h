@@ -1,3 +1,4 @@
+#include "Print.h"
 // DEBUG LED
 #ifndef LED_INVERTED
 #define LED_INVERTED 0 // define as 1 if LED is active low (on)
@@ -56,3 +57,7 @@
 
 #define GPS_POWER_CTRL_CH 3
 #define LORA_POWER_CTRL_CH 2
+
+// #ifndef DEBUG_MSG
+// #define DEBUG_MSG(...) Serial.println(printf(__VA_ARGS__))
+// #endif

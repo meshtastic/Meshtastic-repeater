@@ -6,9 +6,9 @@
 // -----------------------------------------------------------------------------
 
 // If app version is not specified we assume we are not being invoked by the build script
-#ifndef APP_VERSION
-#error APP_VERSION must be set by the build environment
-#endif
+// #ifndef APP_VERSION
+// #error APP_VERSION must be set by the build environment
+// #endif
 
 // FIXME: This is still needed by the Bluetooth Stack and needs to be replaced by something better. Remnant of the old versioning system.
 #ifndef HW_VERSION
