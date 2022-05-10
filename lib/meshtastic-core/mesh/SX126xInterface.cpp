@@ -2,6 +2,7 @@
 #include "SX126xInterface.h"
 #include "error.h"
 #include <assert.h>
+
 // Particular boards might define a different max power based on what their hardware can do
 #ifndef SX126X_MAX_POWER
 #define SX126X_MAX_POWER 22
@@ -98,9 +99,10 @@ bool SX126xInterface<T>::reconfigure()
     if (err != RADIOLIB_ERR_NONE)
         RECORD_CRITICALERROR(CriticalErrorCode_InvalidRadioSetting);
 
+    // https://github.com/meshtastic/RadioLib/commit/4e271e569f5cbe819c093faa0430b8a9432aa0b7#diff-8f769982ed1d09660c37a025ee131a643ca557814517e8d825f54cbb944eb350
     // Hmm - seems to lower SNR when the signal levels are high.  Leaving off for now...
-    err = lora.setRxGain(true);
-    assert(err == RADIOLIB_ERR_NONE);
+    // err = lora.setRxGain(true);
+    // assert(err == RADIOLIB_ERR_NONE);
 
     err = lora.setSyncWord(syncWord);
     assert(err == RADIOLIB_ERR_NONE);
@@ -266,3 +268,8 @@ bool SX126xInterface<T>::sleep()
 
     return true;
 }
+
+// Compiler seems upset about template implementations
+// Might need to look into build flags or something
+#include "SX1262Interface.h"
+template class SX126xInterface<SX1262>;;

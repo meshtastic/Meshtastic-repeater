@@ -41,7 +41,7 @@ typedef struct {
  */
 class RadioInterface
 {
-    // friend class MeshRadio; // for debugging we let that class touch pool
+    friend class MeshRadio; // for debugging we let that class touch pool
 
     // CallbackObserver<RadioInterface, void *> configChangedObserver =
     //     CallbackObserver<RadioInterface, void *>(this, &RadioInterface::reloadConfig);

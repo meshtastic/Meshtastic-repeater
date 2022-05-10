@@ -1,16 +1,21 @@
 #pragma once
 
+#include "MeshRadio.h" // kinda yucky, but we need to know which region we are in
 #include "RadioLibInterface.h"
+#include "RadioLibRF95.h"
+#include "RadioLib.h"
 
 /**
- * \brief Adapter for SX126x radio family. Implements common logic for child classes.
- * \tparam T RadioLib module type for SX126x: SX1262, SX1268.
+ * Our new not radiohead adapter for RF95 style radios
  */
-template<class T>
-class SX126xInterface : public RadioLibInterface
+class RF95Interface : public RadioLibInterface
 {
+    RadioLibRF95 *lora = NULL; // Either a RFM95 or RFM96 depending on what was stuffed on this board
+
   public:
-    SX126xInterface(RADIOLIB_PIN_TYPE cs, RADIOLIB_PIN_TYPE irq, RADIOLIB_PIN_TYPE rst, RADIOLIB_PIN_TYPE busy, SPIClass &spi);
+    RF95Interface(RADIOLIB_PIN_TYPE cs, RADIOLIB_PIN_TYPE irq, RADIOLIB_PIN_TYPE rst, SPIClass &spi);
+
+    bool isIRQPending() override { return false; } // TODO figure out { return lora->getPendingIRQ(); }
 
     /// Initialise the Driver transport hardware and software.
     /// Make sure the Driver is properly configured before calling init().
@@ -25,17 +30,7 @@ class SX126xInterface : public RadioLibInterface
     /// Prepare hardware for sleep.  Call this _only_ for deep sleep, not needed for light sleep.
     virtual bool sleep() override;
 
-    bool isIRQPending() override { return lora.getIrqStatus() != 0; }
-
   protected:
-
-    float currentLimit = 140; // Higher OCP limit for SX126x PA
-
-    /**
-     * Specific module instance 
-     */
-    T lora;
-
     /**
      * Glue functions called from ISR land
      */
@@ -44,7 +39,7 @@ class SX126xInterface : public RadioLibInterface
     /**
      * Enable a particular ISR callback glue function
      */
-    virtual void enableInterrupt(void (*callback)()) { lora.setDio1Action(callback); }
+    virtual void enableInterrupt(void (*callback)()) { lora->setDio0Action(callback); }
 
     /** can we detect a LoRa preamble on the current channel? */
     virtual bool isChannelActive() override;
@@ -58,17 +53,18 @@ class SX126xInterface : public RadioLibInterface
     virtual void startReceive() override;
 
     /**
-     *  We override to turn on transmitter power as needed.
-     */
-    virtual void configHardwareForSend() override;
-
-    /**
      * Add SNR data to received messages
      */
     virtual void addReceiveMetadata(MeshPacket *mp) override;
 
     virtual void setStandby() override;
 
-  private:
-};
+    /**
+     *  We override to turn on transmitter power as needed.
+     */
+    virtual void configHardwareForSend() override;
 
+  private:
+    /** Some boards require GPIO control of tx vs rx paths */
+    void setTransmitEnable(bool txon);
+};
