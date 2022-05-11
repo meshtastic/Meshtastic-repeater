@@ -39,6 +39,9 @@ class LockingModule : public Module
         : Module(cs, irq, rst, gpio, spi, spiSettings)
     {
     }
+    LockingModule(const Module& mod) : Module(mod)
+    {
+    }
 };
 
 class RadioLibInterface : public RadioInterface//, protected concurrency::NotifiedWorkerThread

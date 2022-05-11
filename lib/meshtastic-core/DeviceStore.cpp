@@ -1,4 +1,5 @@
 #include "mesh-pb-constants.h"
+#include "configuration.h"
 #include "DeviceStore.h"
 #include "mesh/Channels.h"
 #include "mesh/MeshRadio.h"
@@ -13,17 +14,23 @@ DeviceStore::DeviceStore() {}
 
 void DeviceStore::init() {
     if (channelFile.channels_count != MAX_NUM_CHANNELS) {
-        Serial.println("Setting default channel and radio preferences\n");
+        DEBUG_MSG("Setting default channel and radio preferences\n");
         channels.initDefaults();
+        DEBUG_MSG("Channel defaults initialized\n");
     }
     initRegion();
-
+    installDefaultConfig();
     channels.onConfigChanged();
 }
 
 void DeviceStore::installDefaultConfig()
 {
     memset(&config, 0, sizeof(config));
+}
+
+void DeviceStore::installDefaultChannels()
+{
+    memset(&channelFile, 0, sizeof(channelFile));
 }
 
 /// Record an error that should be reported via analytics

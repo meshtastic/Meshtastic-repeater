@@ -272,4 +272,4 @@ bool SX126xInterface<T>::sleep()
 // Compiler seems upset about template implementations
 // Might need to look into build flags or something
 #include "SX1262Interface.h"
-template class SX126xInterface<SX1262>;;
+template class SX126xInterface<SX1262>;

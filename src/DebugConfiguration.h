@@ -57,7 +57,3 @@
 
 #define GPS_POWER_CTRL_CH 3
 #define LORA_POWER_CTRL_CH 2
-
-// #ifndef DEBUG_MSG
-// #define DEBUG_MSG(...) Serial.println(printf(__VA_ARGS__))
-// #endif
