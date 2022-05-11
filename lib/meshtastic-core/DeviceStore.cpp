@@ -7,19 +7,20 @@
 
 Config config;
 ChannelFile channelFile;
+DeviceState devicestate;
 
 DeviceStore deviceStore;
 
 DeviceStore::DeviceStore() {}
 
 void DeviceStore::init() {
+    installDefaultConfig();
+    installDefaultChannels();
     if (channelFile.channels_count != MAX_NUM_CHANNELS) {
         DEBUG_MSG("Setting default channel and radio preferences\n");
         channels.initDefaults();
         DEBUG_MSG("Channel defaults initialized\n");
     }
-    initRegion();
-    installDefaultConfig();
     channels.onConfigChanged();
 }
 

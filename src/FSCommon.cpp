@@ -2,8 +2,8 @@
 #include "FSCommon.h"
 #include "assert.h"
 
-void listDir(const char * dirname, uint8_t levels)
 #ifdef FSCom
+void listDir(const char * dirname, uint8_t levels)
 {
     File root = FSCom.open(dirname);
     if(!root){
@@ -26,12 +26,9 @@ void listDir(const char * dirname, uint8_t levels)
         file = root.openNextFile();
     }
     file.close();
-#endif
 }
-
 void fsInit()
 {
-#ifdef FSCom
     if (!FSBegin())
     {
         DEBUG_MSG("ERROR filesystem mount Failed. Formatting...\n");
@@ -40,5 +37,5 @@ void fsInit()
 
     DEBUG_MSG("Filesystem files:\n");
     listDir("/", 10);
-#endif
 }
+#endif

@@ -8,7 +8,6 @@
 #include "mesh/SX1262Interface.h"
 
 /**
- * Constructor
  *
  * Currently we only allow one interface, that may change in the future
  */
@@ -18,7 +17,8 @@ Repeater::Repeater()
 
 void Repeater::init() 
 {
-    #ifdef SX126X_ANT_SW
+    initRegion();
+#ifdef SX126X_ANT_SW
     // make analog PA vs not PA switch on SX126x eval board work properly
     pinMode(SX126X_ANT_SW, OUTPUT);
     digitalWrite(SX126X_ANT_SW, 1);

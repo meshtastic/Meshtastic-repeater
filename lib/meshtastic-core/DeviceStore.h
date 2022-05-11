@@ -4,6 +4,7 @@
 
 extern Config config;
 extern ChannelFile channelFile;
+extern DeviceState devicestate;
 
 class DeviceStore
 {
@@ -14,6 +15,8 @@ class DeviceStore
         void init();
         
     private:
+        void loadFromDisk();
+
         /// Reinit device state from scratch (not loading from disk)
         void installDefaultDeviceState(), installDefaultChannels(), installDefaultConfig();
 };

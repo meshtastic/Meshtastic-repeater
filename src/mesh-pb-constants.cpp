@@ -36,6 +36,7 @@ bool pb_decode_from_bytes(const uint8_t *srcbuf, size_t srcbufsize, const pb_msg
 bool readcb(pb_istream_t *stream, uint8_t *buf, size_t count)
 {
     bool status = false;
+#ifndef IS_CUBECELL
     File *file = (File *)stream->state;
 
     if (buf == NULL) {
@@ -48,16 +49,23 @@ bool readcb(pb_istream_t *stream, uint8_t *buf, size_t count)
 
     if (file->available() == 0)
         stream->bytes_left = 0;
-
+#else
+    //TODO: persistence for cubecell
+#endif
     return status;
 }
 
 /// Write to an arduino file
 bool writecb(pb_ostream_t *stream, const uint8_t *buf, size_t count)
 {
+#ifndef IS_CUBECELL
     File *file = (File *)stream->state;
     // DEBUG_MSG("writing %d bytes to protobuf file\n", count);
     return file->write(buf, count) == count;
+#else
+    //TODO: persistence for cubecell
+    return true;
+#endif
 }
 
 bool is_in_helper(uint32_t n, const uint32_t *array, pb_size_t count)
