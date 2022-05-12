@@ -1,10 +1,18 @@
-[![CLA assistant](https://cla-assistant.io/readme/badge/meshtastic/Repeater)](https://cla-assistant.io/meshtastic/Repeater)
-
 # Meshtastic-repeater
+
+[![CLA assistant](https://cla-assistant.io/readme/badge/meshtastic/Meshtastic-repeater)](https://cla-assistant.io/meshtastic/Meshtastic-repeater)
+[![Fiscal Contributors](https://opencollective.com/meshtastic/tiers/badge.svg?label=Fiscal%20Contributors&color=deeppink)](https://opencollective.com/meshtastic/)
+[![Vercel](https://img.shields.io/static/v1?label=Powered%20by&message=Vercel&style=flat&logo=vercel&color=000000)](https://vercel.com?utm_source=meshtastic&utm_campaign=oss)
 
 > ⚠️ This is a Work In Progress and not functional at the moment. Feel free to Improve and Suggest.
 
+## Overview
+
 A minimalistic repeater node for Meshtastic. 
+
+## Stats
+
+![Alt](https://repobeats.axiom.co/api/embed/76d76b8187a1afb643963f9c8d570e2a8d6f4478.svg "Repobeats analytics image")
 
 ## Supported Targets:
 
