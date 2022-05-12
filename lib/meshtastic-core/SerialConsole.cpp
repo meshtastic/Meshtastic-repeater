@@ -1,7 +1,7 @@
 #include "configuration.h"
 #include "SerialConsole.h"
 #include "assert.h"
-// #include "NodeDB.h"
+#include "DeviceStore.h"
 // #include "PowerFSM.h"
 
 #define Port Serial

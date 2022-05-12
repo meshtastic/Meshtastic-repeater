@@ -1,15 +1,15 @@
-#include "BluetoothSoftwareUpdate.h"
-#include "PowerFSM.h"
+// #include "BluetoothSoftwareUpdate.h"
+// #include "PowerFSM.h"
 #include "configuration.h"
-#include "esp_task_wdt.h"
+//#include "esp_task_wdt.h"
 #include "main.h"
 
-#ifdef USE_NEW_ESP32_BLUETOOTH
-#include "ESP32Bluetooth.h"
-#include "mesh/http/WiFiAPClient.h"
-#else
-#include "nimble/BluetoothUtil.h"
-#endif
+// #ifdef USE_NEW_ESP32_BLUETOOTH
+// #include "ESP32Bluetooth.h"
+// #include "mesh/http/WiFiAPClient.h"
+// #else
+// #include "nimble/BluetoothUtil.h"
+// #endif
 
 #include "sleep.h"
 #include "target_specific.h"
@@ -38,7 +38,7 @@ static void printBLEinfo() {
         // esp_ble_remove_bond_device(dev_list[i].bd_addr);
     }
 
-} */
+} 
 #ifdef USE_NEW_ESP32_BLUETOOTH
 void setBluetoothEnable(bool on) {
     
@@ -54,7 +54,7 @@ void setBluetoothEnable(bool on) {
     }
 }
 #endif
-
+*/
 void esp32Setup()
 {
     uint32_t seed = esp_random();
