@@ -8,4 +8,4 @@ echo "prebuilt binaries for your computer into nanopb-0.4.5"
 
 # the nanopb tool seems to require that the .options file be in the current directory!
 cd proto
-../nanopb-0.4.5/generator-bin/protoc --nanopb_out=-v:../src/generated -I=../proto *.proto
+../nanopb-0.4.5/generator-bin/protoc --nanopb_out=-v:../src/generated -I=../protobufs *.proto
