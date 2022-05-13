@@ -12,12 +12,11 @@
 #define FILE_O_WRITE "w"
 #define FILE_O_READ "r"
 #elif defined(IS_CUBECELL)
-// TODO: persistence for cubecell
-// #define FSCom PortduinoFS
-// #define FSBegin() true
-// #define FILE_O_WRITE "w"
-// #define FILE_O_READ "r"
-
+#include "CubeFS.h"
+#define FSCom CUBEFS
+#define FSBegin() FSCom.begin()
+#define FILE_O_WRITE "w"
+#define FILE_O_READ "r"
 #elif defined(NRF52_SERIES)
 // NRF52 version
 #include "InternalFileSystem.h"
