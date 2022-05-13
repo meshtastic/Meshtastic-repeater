@@ -1,4 +1,5 @@
 #include <SPI.h>
+#include "configuration.h"
 #include "DeviceStore.h"
 #include "Repeater.h"
 

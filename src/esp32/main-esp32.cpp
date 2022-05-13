@@ -11,9 +11,9 @@
 // #include "nimble/BluetoothUtil.h"
 // #endif
 
-#include "sleep.h"
-#include "target_specific.h"
-#include "utils.h"
+// #include "sleep.h"
+//#include "target_specific.h"
+//#include "utils.h"
 #include <Preferences.h>
 #include <driver/rtc_io.h>
 #include <nvs.h>
@@ -91,11 +91,11 @@ void esp32Setup()
 // #define APP_WATCHDOG_SECS 45
 #define APP_WATCHDOG_SECS 90
 
-    res = esp_task_wdt_init(APP_WATCHDOG_SECS, true);
-    assert(res == ESP_OK);
+    // res = esp_task_wdt_init(APP_WATCHDOG_SECS, true);
+    // assert(res == ESP_OK);
 
-    res = esp_task_wdt_add(NULL);
-    assert(res == ESP_OK);
+    // res = esp_task_wdt_add(NULL);
+    // assert(res == ESP_OK);
 }
 
 #if 0
@@ -122,7 +122,7 @@ Periodic axpDebugOutput(axpDebugRead);
 /// loop code specific to ESP32 targets
 void esp32Loop()
 {
-    esp_task_wdt_reset(); // service our app level watchdog
+    // esp_task_wdt_reset(); // service our app level watchdog
     //loopBLE();
 
     // for debug printing
