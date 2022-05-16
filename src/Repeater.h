@@ -26,6 +26,11 @@ class Repeater
      * Currently we only allow one interface, that may change in the future
      */
     void addInterface(RadioInterface *_iface) { radioInterface = _iface; }
+
+    virtual ErrorCode send(MeshPacket *p);
+
+        /** Attempt to cancel a previously sent packet.  Returns true if a packet was found we could cancel */
+    bool cancelSending(NodeNum from, PacketId id);
 };
 
 extern Repeater *repeater;
