@@ -18,6 +18,6 @@ void setup()
 
 void loop() 
 {
-    //TODO: Do things
-    delay(500);
+    //TODO: Do loop things
+    delay(100);
 }
