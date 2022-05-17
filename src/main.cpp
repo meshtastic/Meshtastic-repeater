@@ -1,3 +1,4 @@
+#include "mesh/MeshRadio.h"
 #include <SPI.h>
 #include "configuration.h"
 #include "DeviceStore.h"
@@ -12,12 +13,13 @@ void setup()
         consoleInit(); // Set serial baud rate and init our mesh console
     #endif
     deviceStore.init();
+    config.payloadVariant.lora.region = Config_LoRaConfig_RegionCode_US; 
     repeater = new Repeater();
     repeater->init();
 }
 
 void loop() 
 {
-    //TODO: Do things
-    delay(500);
+    delay(100);
+    DEBUG_MSG("Waiting for a packet %i\n", millis());
 }

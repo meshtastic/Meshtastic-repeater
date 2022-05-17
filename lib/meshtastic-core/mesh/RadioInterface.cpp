@@ -452,6 +452,7 @@ ErrorCode SimRadio::send(MeshPacket *p)
 
 void RadioInterface::deliverToReceiver(MeshPacket *p)
 {
+    // actually send
     // TODO: Refactor
     // if (router)
     //     router->enqueueReceivedMessage(p);

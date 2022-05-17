@@ -7,3 +7,4 @@
 *.pyc
 /.vscode/extensions.json
 .DS_Store
+firmware.uf2

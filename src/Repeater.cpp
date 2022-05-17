@@ -6,6 +6,7 @@
 
 #include "mesh/RF95Interface.h"
 #include "mesh/SX1262Interface.h"
+#include <assert.h>
 
 /**
  *
@@ -66,4 +67,28 @@ void Repeater::init()
         }
     }
 #endif
+}
+
+ErrorCode Repeater::send(MeshPacket *p)
+{
+    // Never set the want_ack flag on broadcast packets sent over the air.
+    if (p->to == NODENUM_BROADCAST)
+        p->want_ack = false;
+
+    // Up until this point we might have been using 0 for the from address (if it started with the phone), but when we send over
+    // the lora we need to make sure we have replaced it with our local address
+    // TODO: maybe we want to add node id / numbers to repeaters later
+    // p->from = getFrom(p);
+
+    assert(p->which_payloadVariant == MeshPacket_encrypted_tag ||
+           p->which_payloadVariant == MeshPacket_decoded_tag); // I _think_ all packets should have a payload by now
+
+    assert(radioInterface); // This should have been detected already in sendLocal (or we just received a packet from outside)
+    return radioInterface->send(p);
+}
+
+/** Attempt to cancel a previously sent packet.  Returns true if a packet was found we could cancel */
+bool Repeater::cancelSending(NodeNum from, PacketId id)
+{
+    return radioInterface ? radioInterface->cancelSending(from, id) : false;
 }

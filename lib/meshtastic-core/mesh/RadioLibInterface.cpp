@@ -33,13 +33,17 @@ void INTERRUPT_ATTR RadioLibInterface::isrLevel0Common(PendingISR cause)
 {
     instance->disableInterrupt();
 
-    // BaseType_t xHigherPriorityTaskWoken;
-    // instance->notifyFromISR(&xHigherPriorityTaskWoken, cause, true);
-
-    // /* Force a context switch if xHigherPriorityTaskWoken is now set to pdTRUE.
-    // The macro used to do this is dependent on the port and may be called
-    // portEND_SWITCHING_ISR. */
-    // YIELD_FROM_ISR(xHigherPriorityTaskWoken);
+    if (cause == PendingISR::ISR_RX) {
+        instance->handleReceiveInterrupt();
+        instance->startReceive();
+        DEBUG_MSG("RX complete\n");
+        // startTransmitTimer();
+    } else if (cause == PendingISR::ISR_TX) {
+        instance->handleTransmitInterrupt();
+        instance->startReceive();
+        DEBUG_MSG("TX complete\n");
+        // startTransmitTimer();
+    }
 }
 
 void INTERRUPT_ATTR RadioLibInterface::isrRxLevel0()
@@ -149,6 +153,7 @@ bool RadioLibInterface::cancelSending(NodeNum from, PacketId id)
     return false;
 }
 
+
 void RadioLibInterface::setTransmitDelay()
 {
     // MeshPacket *p = txQueue.getFront();
@@ -224,7 +229,7 @@ void RadioLibInterface::completeSending()
         // We are done sending that packet, release it
         // TODO: alternate
         //packetPool.release(p);
-        // DEBUG_MSG("Done with send\n");
+        DEBUG_MSG("Done with send\n");
     }
 }
 
