@@ -36,12 +36,12 @@ void INTERRUPT_ATTR RadioLibInterface::isrLevel0Common(PendingISR cause)
     if (cause == PendingISR::ISR_RX) {
         instance->handleReceiveInterrupt();
         instance->startReceive();
-        // DEBUG_MSG("rx complete - starting timer\n");
+        DEBUG_MSG("RX complete\n");
         // startTransmitTimer();
     } else if (cause == PendingISR::ISR_TX) {
         instance->handleTransmitInterrupt();
         instance->startReceive();
-        // DEBUG_MSG("tx complete - starting timer\n");
+        DEBUG_MSG("TX complete\n");
         // startTransmitTimer();
     }
 }

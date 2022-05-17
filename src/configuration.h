@@ -26,6 +26,19 @@
 /// Convert a preprocessor name into a quoted string and if that string is empty use "unset"
 #define optstr(s) (xstr(s)[0] ? xstr(s) : "unset")
 
+
+//
+// Standard definitions for !ESP32 targets
+//
+
+#ifdef NO_ESP32
+// Nop definition for these attributes - not used on NRF52
+#define EXT_RAM_ATTR
+#define IRAM_ATTR
+#define RTC_DATA_ATTR
+#endif
+
+
 #include "variant.h"
 #include "RF95Configuration.h"
 #include "DebugConfiguration.h"

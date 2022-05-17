@@ -26,10 +26,10 @@ projenv.Append(CCFLAGS=[
     "-DAPP_VERSION_SHORT=" + verObj['short']    
 ])
 
-def after_upload(source, target, env):
-    print("Delay while uploading...")
-    import time
-    time.sleep(5)
-    print("Done!")
+# def after_upload(source, target, env):
+#     print("Delay while uploading...")
+#     import time
+#     time.sleep(5)
+#     print("Done!")
 
-env.AddPostAction("upload", after_upload)
+# env.AddPostAction("upload", after_upload)
