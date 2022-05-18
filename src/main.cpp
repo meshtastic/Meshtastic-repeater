@@ -20,6 +20,6 @@ void setup()
 
 void loop() 
 {
-    delay(100);
-    DEBUG_MSG("Waiting for a packet %i\n", millis());
+    delay(10);
+    //DEBUG_MSG("Waiting for a packet %i\n", millis());
 }
