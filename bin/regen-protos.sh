@@ -7,5 +7,5 @@ echo " root directory if the following step fails, you should download the corre
 echo "prebuilt binaries for your computer into nanopb-0.4.5"
 
 # the nanopb tool seems to require that the .options file be in the current directory!
-cd proto
+cd protobufs
 ../nanopb-0.4.5/generator-bin/protoc --nanopb_out=-v:../src/generated -I=../protobufs *.proto
