@@ -75,7 +75,7 @@ bool SX126xInterface<T>::init()
     if (res == RADIOLIB_ERR_NONE)
         startReceive(); // start receiving
     
-    DEBUG_MSG("Start receiving %d\n");
+    DEBUG_MSG("Start receiving\n");
 
     return res == RADIOLIB_ERR_NONE;
 }
