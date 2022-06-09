@@ -3,3 +3,5 @@
 #define RTC_DATA_ATTR
 
 #define IS_CUBECELL
+
+#define USE_SX1262
