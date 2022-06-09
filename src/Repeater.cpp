@@ -41,7 +41,7 @@ void Repeater::init()
 #if defined(USE_SX1262)
     if (!radioInterface) {
         #ifdef IS_CUBECELL
-            radioInterface = new SX1262Interface(RADIOLIB_BUILTIN_MODULE);
+            radioInterface = new SX1262Interface(RADIOLIB_BUILTIN_MODULE, SPI);
         #else
             radioInterface = new SX1262Interface(SX126X_CS, SX126X_DIO1, SX126X_RESET, SX126X_BUSY, SPI);
         #endif
