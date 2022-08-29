@@ -2,9 +2,13 @@
 
 #include "mesh-pb-constants.h"
 
-extern Config config;
+
+#define DEVICESTATE_CUR_VER 15
+#define DEVICESTATE_MIN_VER DEVICESTATE_CUR_VER
+
+// extern DeviceState devicestate;
+extern LocalConfig config;
 extern ChannelFile channelFile;
-extern DeviceState devicestate;
 
 class DeviceStore
 {
@@ -16,7 +20,7 @@ class DeviceStore
         
     private:
         void loadFromDisk();
-
+        void resetRadioConfig();
         /// Reinit device state from scratch (not loading from disk)
         void installDefaultDeviceState(), installDefaultChannels(), installDefaultConfig();
 };

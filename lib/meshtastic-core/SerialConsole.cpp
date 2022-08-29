@@ -27,7 +27,7 @@ SerialConsole::SerialConsole() : /* StreamAPI(&Port), */ RedirectablePrint(&Port
     console = this;
 //    canWrite = false; // We don't send packets to our port until it has talked to us first
 
-    Port.begin(SERIAL_BAUD);
+    Port.begin();
 #ifdef NRF52_SERIES
     time_t timeout = millis();
     while (!Port) {

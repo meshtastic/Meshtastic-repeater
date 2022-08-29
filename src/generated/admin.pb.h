@@ -6,6 +6,7 @@
 #include <pb.h>
 #include "channel.pb.h"
 #include "config.pb.h"
+#include "device_metadata.pb.h"
 #include "mesh.pb.h"
 #include "module_config.pb.h"
 
@@ -20,7 +21,8 @@ typedef enum _AdminMessage_ConfigType {
     AdminMessage_ConfigType_POWER_CONFIG = 2, 
     AdminMessage_ConfigType_WIFI_CONFIG = 3, 
     AdminMessage_ConfigType_DISPLAY_CONFIG = 4, 
-    AdminMessage_ConfigType_LORA_CONFIG = 5 
+    AdminMessage_ConfigType_LORA_CONFIG = 5, 
+    AdminMessage_ConfigType_BLUETOOTH_CONFIG = 6 
 } AdminMessage_ConfigType;
 
 typedef enum _AdminMessage_ModuleConfigType { 
@@ -55,31 +57,25 @@ typedef struct _AdminMessage {
         ModuleConfig get_module_config_response;
         ModuleConfig set_module_config;
         bool confirm_set_module_config;
+        bool get_all_channel_request;
         bool confirm_set_channel;
         bool confirm_set_radio;
         bool exit_simulator;
         int32_t reboot_seconds;
-        bool get_canned_message_module_part1_request;
-        char get_canned_message_module_part1_response[201];
-        bool get_canned_message_module_part2_request;
-        char get_canned_message_module_part2_response[201];
-        bool get_canned_message_module_part3_request;
-        char get_canned_message_module_part3_response[201];
-        bool get_canned_message_module_part4_request;
-        char get_canned_message_module_part4_response[201];
-        char set_canned_message_module_part1[201];
-        char set_canned_message_module_part2[201];
-        char set_canned_message_module_part3[201];
-        char set_canned_message_module_part4[201];
+        bool get_canned_message_module_messages_request;
+        char get_canned_message_module_messages_response[201];
+        char set_canned_message_module_messages[201];
         int32_t shutdown_seconds;
+        uint32_t get_device_metadata_request;
+        DeviceMetadata get_device_metadata_response;
     }; 
 } AdminMessage;
 
 
 /* Helper constants for enums */
 #define _AdminMessage_ConfigType_MIN AdminMessage_ConfigType_DEVICE_CONFIG
-#define _AdminMessage_ConfigType_MAX AdminMessage_ConfigType_LORA_CONFIG
-#define _AdminMessage_ConfigType_ARRAYSIZE ((AdminMessage_ConfigType)(AdminMessage_ConfigType_LORA_CONFIG+1))
+#define _AdminMessage_ConfigType_MAX AdminMessage_ConfigType_BLUETOOTH_CONFIG
+#define _AdminMessage_ConfigType_ARRAYSIZE ((AdminMessage_ConfigType)(AdminMessage_ConfigType_BLUETOOTH_CONFIG+1))
 
 #define _AdminMessage_ModuleConfigType_MIN AdminMessage_ModuleConfigType_MQTT_CONFIG
 #define _AdminMessage_ModuleConfigType_MAX AdminMessage_ModuleConfigType_CANNEDMSG_CONFIG
@@ -109,23 +105,17 @@ extern "C" {
 #define AdminMessage_get_module_config_response_tag 15
 #define AdminMessage_set_module_config_tag       16
 #define AdminMessage_confirm_set_module_config_tag 17
+#define AdminMessage_get_all_channel_request_tag 18
 #define AdminMessage_confirm_set_channel_tag     32
 #define AdminMessage_confirm_set_radio_tag       33
 #define AdminMessage_exit_simulator_tag          34
 #define AdminMessage_reboot_seconds_tag          35
-#define AdminMessage_get_canned_message_module_part1_request_tag 36
-#define AdminMessage_get_canned_message_module_part1_response_tag 37
-#define AdminMessage_get_canned_message_module_part2_request_tag 38
-#define AdminMessage_get_canned_message_module_part2_response_tag 39
-#define AdminMessage_get_canned_message_module_part3_request_tag 40
-#define AdminMessage_get_canned_message_module_part3_response_tag 41
-#define AdminMessage_get_canned_message_module_part4_request_tag 42
-#define AdminMessage_get_canned_message_module_part4_response_tag 43
-#define AdminMessage_set_canned_message_module_part1_tag 44
-#define AdminMessage_set_canned_message_module_part2_tag 45
-#define AdminMessage_set_canned_message_module_part3_tag 46
-#define AdminMessage_set_canned_message_module_part4_tag 47
+#define AdminMessage_get_canned_message_module_messages_request_tag 36
+#define AdminMessage_get_canned_message_module_messages_response_tag 37
+#define AdminMessage_set_canned_message_module_messages_tag 44
 #define AdminMessage_shutdown_seconds_tag        51
+#define AdminMessage_get_device_metadata_request_tag 52
+#define AdminMessage_get_device_metadata_response_tag 53
 
 /* Struct field encoding specification for nanopb */
 #define AdminMessage_FIELDLIST(X, a) \
@@ -143,23 +133,17 @@ X(a, STATIC,   ONEOF,    UENUM,    (variant,get_module_config_request,get_module
 X(a, STATIC,   ONEOF,    MESSAGE,  (variant,get_module_config_response,get_module_config_response),  15) \
 X(a, STATIC,   ONEOF,    MESSAGE,  (variant,set_module_config,set_module_config),  16) \
 X(a, STATIC,   ONEOF,    BOOL,     (variant,confirm_set_module_config,confirm_set_module_config),  17) \
+X(a, STATIC,   ONEOF,    BOOL,     (variant,get_all_channel_request,get_all_channel_request),  18) \
 X(a, STATIC,   ONEOF,    BOOL,     (variant,confirm_set_channel,confirm_set_channel),  32) \
 X(a, STATIC,   ONEOF,    BOOL,     (variant,confirm_set_radio,confirm_set_radio),  33) \
 X(a, STATIC,   ONEOF,    BOOL,     (variant,exit_simulator,exit_simulator),  34) \
 X(a, STATIC,   ONEOF,    INT32,    (variant,reboot_seconds,reboot_seconds),  35) \
-X(a, STATIC,   ONEOF,    BOOL,     (variant,get_canned_message_module_part1_request,get_canned_message_module_part1_request),  36) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,get_canned_message_module_part1_response,get_canned_message_module_part1_response),  37) \
-X(a, STATIC,   ONEOF,    BOOL,     (variant,get_canned_message_module_part2_request,get_canned_message_module_part2_request),  38) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,get_canned_message_module_part2_response,get_canned_message_module_part2_response),  39) \
-X(a, STATIC,   ONEOF,    BOOL,     (variant,get_canned_message_module_part3_request,get_canned_message_module_part3_request),  40) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,get_canned_message_module_part3_response,get_canned_message_module_part3_response),  41) \
-X(a, STATIC,   ONEOF,    BOOL,     (variant,get_canned_message_module_part4_request,get_canned_message_module_part4_request),  42) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,get_canned_message_module_part4_response,get_canned_message_module_part4_response),  43) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,set_canned_message_module_part1,set_canned_message_module_part1),  44) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,set_canned_message_module_part2,set_canned_message_module_part2),  45) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,set_canned_message_module_part3,set_canned_message_module_part3),  46) \
-X(a, STATIC,   ONEOF,    STRING,   (variant,set_canned_message_module_part4,set_canned_message_module_part4),  47) \
-X(a, STATIC,   ONEOF,    INT32,    (variant,shutdown_seconds,shutdown_seconds),  51)
+X(a, STATIC,   ONEOF,    BOOL,     (variant,get_canned_message_module_messages_request,get_canned_message_module_messages_request),  36) \
+X(a, STATIC,   ONEOF,    STRING,   (variant,get_canned_message_module_messages_response,get_canned_message_module_messages_response),  37) \
+X(a, STATIC,   ONEOF,    STRING,   (variant,set_canned_message_module_messages,set_canned_message_module_messages),  44) \
+X(a, STATIC,   ONEOF,    INT32,    (variant,shutdown_seconds,shutdown_seconds),  51) \
+X(a, STATIC,   ONEOF,    UINT32,   (variant,get_device_metadata_request,get_device_metadata_request),  52) \
+X(a, STATIC,   ONEOF,    MESSAGE,  (variant,get_device_metadata_response,get_device_metadata_response),  53)
 #define AdminMessage_CALLBACK NULL
 #define AdminMessage_DEFAULT NULL
 #define AdminMessage_variant_set_owner_MSGTYPE User
@@ -170,6 +154,7 @@ X(a, STATIC,   ONEOF,    INT32,    (variant,shutdown_seconds,shutdown_seconds), 
 #define AdminMessage_variant_set_config_MSGTYPE Config
 #define AdminMessage_variant_get_module_config_response_MSGTYPE ModuleConfig
 #define AdminMessage_variant_set_module_config_MSGTYPE ModuleConfig
+#define AdminMessage_variant_get_device_metadata_response_MSGTYPE DeviceMetadata
 
 extern const pb_msgdesc_t AdminMessage_msg;
 

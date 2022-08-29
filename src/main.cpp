@@ -13,7 +13,6 @@ void setup()
         consoleInit(); // Set serial baud rate and init our mesh console
     #endif
     deviceStore.init();
-    config.payloadVariant.lora.region = Config_LoRaConfig_RegionCode_US; 
     repeater = new Repeater();
     repeater->init();
 }

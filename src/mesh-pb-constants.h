@@ -1,6 +1,7 @@
 #pragma once
 
 #include "generated/mesh.pb.h"
+#include "generated/localonly.pb.h"
 #include "generated/deviceonly.pb.h"
 #include "generated/admin.pb.h"
 

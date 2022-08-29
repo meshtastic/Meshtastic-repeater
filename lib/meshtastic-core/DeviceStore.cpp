@@ -5,15 +5,23 @@
 #include "mesh/MeshRadio.h"
 #include "error.h"
 
-Config config;
+DeviceStore deviceStore;
+
+LocalConfig config;
 ChannelFile channelFile;
 DeviceState devicestate;
 
-DeviceStore deviceStore;
+/** The current change # for radio settings.  Starts at 0 on boot and any time the radio settings
+ * might have changed is incremented.  Allows others to detect they might now be on a new channel.
+ */
+uint32_t radioGeneration;
 
 DeviceStore::DeviceStore() {}
 
 void DeviceStore::init() {
+    // DEBUG_MSG("Installing default DeviceState\n");
+    // memset(&devicestate, 0, sizeof(DeviceState));
+
     installDefaultConfig();
     installDefaultChannels();
     if (channelFile.channels_count != MAX_NUM_CHANNELS) {
@@ -26,7 +34,32 @@ void DeviceStore::init() {
 
 void DeviceStore::installDefaultConfig()
 {
-    memset(&config, 0, sizeof(config));
+    DEBUG_MSG("Installing default LocalConfig\n");
+    memset(&config, 0, sizeof(LocalConfig));
+    config.version = DEVICESTATE_CUR_VER;
+    config.has_device = true;
+    config.has_display = true;
+    config.has_lora = true;
+    config.has_position = true;
+    config.has_power = true;
+    config.has_wifi = true;
+    config.has_bluetooth = true;
+
+    config.lora.region = Config_LoRaConfig_RegionCode_US;
+    config.lora.modem_preset = Config_LoRaConfig_ModemPreset_LongFast;
+}
+
+void DeviceStore::resetRadioConfig() 
+{
+    radioGeneration++;
+
+    if (channelFile.channels_count != MAX_NUM_CHANNELS) {
+        DEBUG_MSG("Setting default channel and radio preferences!\n");
+
+        channels.initDefaults();
+    }
+    channels.onConfigChanged();
+    initRegion();
 }
 
 void DeviceStore::installDefaultChannels()

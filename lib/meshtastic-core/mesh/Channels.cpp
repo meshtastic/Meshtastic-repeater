@@ -81,20 +81,17 @@ Channel &Channels::fixupChannel(ChannelIndex chIndex)
  */
 void Channels::initDefaultChannel(ChannelIndex chIndex)
 {
-    Channel &ch = getByIndex(chIndex);
-    ChannelSettings &channelSettings = ch.settings;
-    Config_LoRaConfig &loraConfig = config.payloadVariant.lora;
+    config.lora.modem_preset = Config_LoRaConfig_ModemPreset_LongFast; // Default to Long Range & Fast
 
-    loraConfig.modem_preset = Config_LoRaConfig_ModemPreset_LongFast; // Default to Long Range & Fast
-
-    loraConfig.tx_power = 0; // default
+    config.lora.tx_power = 0; // default
     uint8_t defaultpskIndex = 1;
-    channelSettings.psk.bytes[0] = defaultpskIndex;
-    channelSettings.psk.size = 1;
-    strcpy(channelSettings.name, "");
+    channelFile.channels[chIndex].settings.psk.bytes[0] = defaultpskIndex;
+    channelFile.channels[chIndex].settings.psk.size = 1;
+    strcpy(channelFile.channels[chIndex].settings.name, "");
 
-    ch.has_settings = true;
-    ch.role = Channel_Role_PRIMARY;
+    channelFile.channels[chIndex].has_settings = true;
+    channelFile.channels[chIndex].role = Channel_Role_PRIMARY;
+    // DEBUG_MSG("Channel: name=%s, num=%i, psk=%x\n", ch.settings.name, ch.settings.channel_num, ch.settings.psk);
 }
 
 CryptoKey Channels::getKey(ChannelIndex chIndex)
@@ -174,9 +171,9 @@ void Channels::onConfigChanged()
 {
     // Make sure the phone hasn't mucked anything up
     for (int i = 0; i < channelFile.channels_count; i++) {
-        Channel &ch = fixupChannel(i);
+        channelFile.channels[i] = fixupChannel(i);
 
-        if (ch.role == Channel_Role_PRIMARY)
+        if (channelFile.channels[i].role == Channel_Role_PRIMARY)
             primaryIndex = i;
     }
 }
@@ -210,37 +207,37 @@ const char *Channels::getName(size_t chIndex)
         // Per mesh.proto spec, if bandwidth is specified we must ignore modemPreset enum, we assume that in that case
         // the app fucked up and forgot to set channelSettings.name
 
-        if (config.payloadVariant.lora.bandwidth != 0)
-            channelName = "Unset";
+        if (config.lora.bandwidth != 0)
+            channelName = "Custom";
         else
-            switch (config.payloadVariant.lora.modem_preset) {
+            switch (config.lora.modem_preset) {
             case Config_LoRaConfig_ModemPreset_ShortSlow:
-                channelName = "ShortSlow";
+                channelName = "ShortS";
                 break;
             case Config_LoRaConfig_ModemPreset_ShortFast:
-                channelName = "ShortFast";
+                channelName = "ShortF";
                 break;
-            case Config_LoRaConfig_ModemPreset_MidSlow:
-                channelName = "MediumSlow";
+            case Config_LoRaConfig_ModemPreset_MedSlow:
+                channelName = "MedS";
                 break;
-            case Config_LoRaConfig_ModemPreset_MidFast:
-                channelName = "MediumFast";
-                break;
-            case Config_LoRaConfig_ModemPreset_LongFast:
-                channelName = "LongFast";
+            case Config_LoRaConfig_ModemPreset_MedFast:
+                channelName = "MedF";
                 break;
             case Config_LoRaConfig_ModemPreset_LongSlow:
-                channelName = "LongSlow";
+                channelName = "LongS";
+                break;
+            case Config_LoRaConfig_ModemPreset_LongFast:
+                channelName = "LongF";
                 break;
             case Config_LoRaConfig_ModemPreset_VLongSlow:
-                channelName = "VLongSlow";
+                channelName = "VeryL";
                 break;
             default:
                 channelName = "Invalid";
                 break;
             }
     }
-
+    DEBUG_MSG("channelName=%s\n", channelName);
     return channelName;
 }
 

@@ -9,7 +9,6 @@
 #include <pb_encode.h>
 // #include "MeshService.h"
 // #include "Router.h"
-
 #define RDEF(name, freq_start, freq_end, duty_cycle, spacing, power_limit, audio_permitted, frequency_switching)                 \
     {                                                                                                                            \
         Config_LoRaConfig_RegionCode_##name, freq_start, freq_end, duty_cycle, spacing, power_limit, audio_permitted,            \
@@ -34,8 +33,15 @@ const RegionInfo regions[] = {
         https://www.legislation.gov.uk/uksi/1999/930/schedule/6/part/III/made/data.xht?view=snippet&wrap=true
 
         audio_permitted = false per regulation
+
+        Special Note:
+        The link above describes LoRaWAN's band plan, stating a power limit of 16 dBm. This is their own suggested specification,
+        we do not need to follow it. The European Union regulations clearly state that the power limit for this frequency range is 500 mW, or 27 dBm.
+        It also states that we can use interference avoidance and spectrum access techniques to avoid a duty cycle.
+        (Please refer to section 4.21 in the following document)
+        https://ec.europa.eu/growth/tools-databases/tris/index.cfm/ro/search/?trisaction=search.detail&year=2021&num=528&dLang=EN
      */
-    RDEF(EU868, 869.4f, 869.65f, 10, 0, 16, false, false),
+    RDEF(EU868, 869.4f, 869.65f, 10, 0, 27, false, false),
 
     /*
         https://lora-alliance.org/wp-content/uploads/2020/11/lorawan_regional_parameters_v1.0.3reva_0.pdf
@@ -99,10 +105,10 @@ const RegionInfo *myRegion;
 void initRegion()
 {
     const RegionInfo *r = regions;
-    for (; r->code != Config_LoRaConfig_RegionCode_Unset && r->code != config.payloadVariant.lora.region; r++)
+    for (; r->code != Config_LoRaConfig_RegionCode_Unset && r->code != config.lora.region; r++)
         ;
     myRegion = r;
-    DEBUG_MSG("Wanted region %d, using %s\n", config.payloadVariant.lora.region, r->name);
+    DEBUG_MSG("Wanted region %d, using %s\n", config.lora.region, r->name);
 }
 
 /**
@@ -158,55 +164,50 @@ uint32_t RadioInterface::getPacketTime(MeshPacket *p)
 /** The delay to use for retransmitting dropped packets */
 uint32_t RadioInterface::getRetransmissionMsec(const MeshPacket *p)
 {
-    assert(shortPacketMsec); // Better be non zero
-
-    // was 20 and 22 secs respectively, but now with shortPacketMsec as 2269, this should give the same range
-    return random(9 * shortPacketMsec, 10 * shortPacketMsec);
+    assert(slotTimeMsec); // Better be non zero
+    static uint8_t bytes[MAX_RHPACKETLEN];
+    size_t numbytes = pb_encode_to_bytes(bytes, sizeof(bytes), Data_fields, &p->decoded);
+    uint32_t packetAirtime = getPacketTime(numbytes + sizeof(PacketHeader));
+    // Make sure enough time has elapsed for this packet to be sent and an ACK is received. 
+    // DEBUG_MSG("Waiting for flooding message with airtime %d and slotTime is %d\n", packetAirtime, slotTimeMsec);
+    float channelUtil = 1.0; // TODO: airTime->channelUtilizationPercent();
+    uint8_t CWsize = map(channelUtil, 0, 100, CWmin, CWmax);
+    // Assuming we pick max. of CWsize and there will be a receiver with SNR at half the range
+    return 2*packetAirtime + (pow(2, CWsize) + pow(2, int((CWmax+CWmin)/2))) * slotTimeMsec + PROCESSING_TIME_MSEC;
 }
 
-/** The delay to use when we want to send something but the ether is busy */
+/** The delay to use when we want to send something */
 uint32_t RadioInterface::getTxDelayMsec()
 {
-    /** At the low end we want to pick a delay large enough that anyone who just completed sending (some other node)
-     * has had enough time to switch their radio back into receive mode.
-     */
-    const uint32_t MIN_TX_WAIT_MSEC = 100;
-
-    /**
-     * At the high end, this value is used to spread node attempts across time so when they are replying to a packet
-     * they don't both check that the airwaves are clear at the same moment.  As long as they are off by some amount
-     * one of the two will be first to start transmitting and the other will see that.  I bet 500ms is more than enough
-     * to guarantee this.
-     */
-    // const uint32_t MAX_TX_WAIT_MSEC = 2000; // stress test would still fail occasionally with 1000
-
-    return random((MIN_TX_WAIT_MSEC), (MIN_TX_WAIT_MSEC + shortPacketMsec));
+    /** We wait a random multiple of 'slotTimes' (see definition in header file) in order to avoid collisions.
+    The pool to take a random multiple from is the contention window (CW), which size depends on the 
+    current channel utilization. */
+    float channelUtil = 1.0; // airTime->channelUtilizationPercent();
+    uint8_t CWsize = map(channelUtil, 0, 100, CWmin, CWmax);
+    // DEBUG_MSG("Current channel utilization is %f so setting CWsize to %d\n", channelUtil, CWsize);
+    return random(0, pow(2, CWsize)) * slotTimeMsec;
 }
 
-/** The delay to use when we want to send something but the ether is busy */
+/** The delay to use when we want to flood a message */
 uint32_t RadioInterface::getTxDelayMsecWeighted(float snr)
 {
-    /** At the low end we want to pick a delay large enough that anyone who just completed sending (some other node)
-     * has had enough time to switch their radio back into receive mode.
-     */
-    const uint32_t MIN_TX_WAIT_MSEC = 100;
-
     // The minimum value for a LoRa SNR
     const uint32_t SNR_MIN = -20;
 
     // The maximum value for a LoRa SNR
     const uint32_t SNR_MAX = 15;
 
-    //  high SNR = Long Delay
-    //  low SNR = Short Delay
+    //  high SNR = large CW size (Long Delay)
+    //  low SNR = small CW size (Short Delay)
     uint32_t delay = 0;
-
-    if (config.payloadVariant.device.role == Config_DeviceConfig_Role_Router ||
-        config.payloadVariant.device.role == Config_DeviceConfig_Role_RouterClient) {
-        delay = map(snr, SNR_MIN, SNR_MAX, MIN_TX_WAIT_MSEC, (MIN_TX_WAIT_MSEC + (shortPacketMsec / 2)));
+    uint8_t CWsize = map(snr, SNR_MIN, SNR_MAX, CWmin, CWmax);
+    // DEBUG_MSG("rx_snr of %f so setting CWsize to:%d\n", snr, CWsize);
+    if (config.device.role == Config_DeviceConfig_Role_Router ||
+        config.device.role == Config_DeviceConfig_Role_RouterClient) {
+        delay = random(0, 2*CWsize) * slotTimeMsec;
         DEBUG_MSG("rx_snr found in packet. As a router, setting tx delay:%d\n", delay);
     } else {
-        delay = map(snr, SNR_MIN, SNR_MAX, MIN_TX_WAIT_MSEC + (shortPacketMsec / 2), (MIN_TX_WAIT_MSEC + shortPacketMsec * 2));
+        delay = random(0, pow(2, CWsize)) * slotTimeMsec;
         DEBUG_MSG("rx_snr found in packet. Setting tx delay:%d\n", delay);
     }
 
@@ -250,7 +251,7 @@ void printPacket(const char *prefix, const MeshPacket *p)
         DEBUG_MSG(" rxSNR=%g", p->rx_snr);
     }
     if (p->rx_rssi != 0) {
-        DEBUG_MSG(" rxSNR=%g", p->rx_rssi);
+        DEBUG_MSG(" rxRSSI=%g", p->rx_rssi);
     }
     if (p->priority != 0)
         DEBUG_MSG(" priority=%d", p->priority);
@@ -276,10 +277,11 @@ bool RadioInterface::init()
 {
     DEBUG_MSG("Starting meshradio init...\n");
 
-    // TODO: Refactor
+     // TODO: Refactor
     // configChangedObserver.observe(&service.configChanged);
     // preflightSleepObserver.observe(&preflightSleep);
     // notifyDeepSleepObserver.observe(&notifyDeepSleep);
+
 
     applyModemConfig();
 
@@ -347,10 +349,9 @@ void RadioInterface::applyModemConfig()
 {
     // Set up default configuration
     // No Sync Words in LORA mode
-    Config_LoRaConfig &loraConfig = config.payloadVariant.lora;
-    auto channelSettings = channels.getPrimary();
-    if (loraConfig.spread_factor == 0) {
-        switch (loraConfig.modem_preset) {
+    auto channelSettings = channelFile.channels[0].settings;
+    if (config.lora.spread_factor == 0) {
+        switch (config.lora.modem_preset) {
         case Config_LoRaConfig_ModemPreset_ShortFast:
             bw = 250;
             cr = 8;
@@ -361,12 +362,12 @@ void RadioInterface::applyModemConfig()
             cr = 8;
             sf = 8;
             break;
-        case Config_LoRaConfig_ModemPreset_MidFast:
+        case Config_LoRaConfig_ModemPreset_MedFast:
             bw = 250;
             cr = 8;
             sf = 9;
             break;
-        case Config_LoRaConfig_ModemPreset_MidSlow:
+        case Config_LoRaConfig_ModemPreset_MedSlow:
             bw = 250;
             cr = 8;
             sf = 10;
@@ -390,9 +391,9 @@ void RadioInterface::applyModemConfig()
             assert(0); // Unknown enum
         }
     } else {
-        sf = loraConfig.spread_factor;
-        cr = loraConfig.coding_rate;
-        bw = loraConfig.bandwidth;
+        sf = config.lora.spread_factor;
+        cr = config.lora.coding_rate;
+        bw = config.lora.bandwidth;
 
         if (bw == 31) // This parameter is not an integer
             bw = 31.25;
@@ -400,27 +401,39 @@ void RadioInterface::applyModemConfig()
             bw = 62.5;
     }
 
-    power = loraConfig.tx_power;
-    shortPacketMsec = getPacketTime(sizeof(PacketHeader));
-    assert(myRegion); // Should have been found in init
+    power = config.lora.tx_power;
+    DEBUG_MSG("config.lora.region=%i, sf=%i, cr=%i, bw=%f\n", 
+        config.lora.region, sf, cr, bw);
+    // assert(myRegion); // Should have been found in init
+    if ((power == 0) || (power > myRegion->powerLimit))
+        power = myRegion->powerLimit;
 
+    if (power == 0)
+        power = 17; // Default to default power if we don't have a valid power
+    
     // Calculate the number of channels
     uint32_t numChannels = floor((myRegion->freqEnd - myRegion->freqStart) / (myRegion->spacing + (bw / 1000)));
 
     // If user has manually specified a channel num, then use that, otherwise generate one by hashing the name
     const char *channelName = channels.getName(channels.getPrimaryIndex());
+    DEBUG_MSG("Channel id=%i, ch_num=%i\n", channelSettings.id, channelSettings.channel_num);
     int channel_num = channelSettings.channel_num ? channelSettings.channel_num - 1 : hash(channelName) % numChannels;
-    float freq = myRegion->freqStart + ((((myRegion->freqEnd - myRegion->freqStart) / numChannels) / 2) * channel_num);
+
+    // Old frequency selection formula
+    // float freq = myRegion->freqStart + ((((myRegion->freqEnd - myRegion->freqStart) / numChannels) / 2) * channel_num);
+
+    // New frequency selection formula
+    float freq = myRegion->freqStart + (bw / 2000) + (channel_num * (bw / 1000));
 
     saveChannelNum(channel_num);
-    saveFreq(freq);
+    saveFreq(freq + config.lora.frequency_offset);
 
-    // DEBUG_MSG("Set radio: name=%s, config=%u, ch=%d, power=%d\n", channelName, loraConfig.modem_preset, channel_num, power);
-    // DEBUG_MSG("Radio myRegion->freqStart / myRegion->freqEnd: %f -> %f (%f mhz)\n", myRegion->freqStart, myRegion->freqEnd, myRegion->freqEnd - myRegion->freqStart);
-    // DEBUG_MSG("Radio myRegion->numChannels: %d\n", numChannels);
-    // DEBUG_MSG("Radio channel_num: %d\n", channel_num);
-    // DEBUG_MSG("Radio frequency: %f\n", getFreq());
-    // DEBUG_MSG("Short packet time: %u msec\n", shortPacketMsec);
+    DEBUG_MSG("Set radio: region=%s, name=%s, config=%u, ch=%d, power=%d\n", myRegion->name, channelName, config.lora.modem_preset, channel_num, power);
+    DEBUG_MSG("Radio myRegion->freqStart / myRegion->freqEnd: %f -> %f (%f mhz)\n", myRegion->freqStart, myRegion->freqEnd, myRegion->freqEnd - myRegion->freqStart);
+    DEBUG_MSG("Radio myRegion->numChannels: %d\n", numChannels);
+    DEBUG_MSG("Radio channel_num: %d\n", channel_num);
+    DEBUG_MSG("Radio frequency: %f\n", getFreq());
+    DEBUG_MSG("Slot time: %u msec\n", slotTimeMsec);
 }
 
 /**
@@ -452,12 +465,11 @@ ErrorCode SimRadio::send(MeshPacket *p)
 
 void RadioInterface::deliverToReceiver(MeshPacket *p)
 {
-    // actually send
+     // actually send
     // TODO: Refactor
     // if (router)
     //     router->enqueueReceivedMessage(p);
 }
-
 /***
  * given a packet set sendingPacket and decode the protobufs into radiobuf.  Returns # of payload bytes to send
  */

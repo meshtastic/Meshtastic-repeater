@@ -57,6 +57,10 @@ bool SX126xInterface<T>::init()
     // \todo Display actual typename of the adapter, not just `SX126x`
     DEBUG_MSG("SX126x init result %d\n", res);
 
+    DEBUG_MSG("Frequency set to %f\n", getFreq());    
+    DEBUG_MSG("Bandwidth set to %f\n", bw);    
+    DEBUG_MSG("Power output set to %d\n", power);
+
     // current limit was removed from module' ctor
     // override default value (60 mA)
     res = lora.setCurrentLimit(currentLimit);
@@ -68,6 +72,7 @@ bool SX126xInterface<T>::init()
     if (res == RADIOLIB_ERR_NONE)
         res = lora.setDio2AsRfSwitch(true);
 #endif
+
 
     if (res == RADIOLIB_ERR_NONE)
         res = lora.setCRC(RADIOLIB_SX126X_LORA_CRC_ON);
@@ -101,8 +106,8 @@ bool SX126xInterface<T>::reconfigure()
     if (err != RADIOLIB_ERR_NONE)
         RECORD_CRITICALERROR(CriticalErrorCode_InvalidRadioSetting);
 
-    // https://github.com/meshtastic/RadioLib/commit/4e271e569f5cbe819c093faa0430b8a9432aa0b7#diff-8f769982ed1d09660c37a025ee131a643ca557814517e8d825f54cbb944eb350
     // Hmm - seems to lower SNR when the signal levels are high.  Leaving off for now...
+    // TODO: Confirm gain registers are okay now
     // err = lora.setRxGain(true);
     // assert(err == RADIOLIB_ERR_NONE);
 
@@ -119,8 +124,8 @@ bool SX126xInterface<T>::reconfigure()
     if (err != RADIOLIB_ERR_NONE)
         RECORD_CRITICALERROR(CriticalErrorCode_InvalidRadioSetting);
 
-    if (power > SX126X_MAX_POWER) // This chip has lower power limits than some
-        power = SX126X_MAX_POWER;
+    if (power > 22) // This chip has lower power limits than some
+        power = 22;
     err = lora.setOutputPower(power);
     assert(err == RADIOLIB_ERR_NONE);
 
@@ -221,9 +226,10 @@ bool SX126xInterface<T>::isChannelActive()
 
     setStandby(); 
     result = lora.scanChannel();
-    if (result == RADIOLIB_PREAMBLE_DETECTED) 
+    DEBUG_MSG("lora.scanChannel()=%i\n", result);
+    if (result == RADIOLIB_PREAMBLE_DETECTED)
         return true;
-    
+     
     assert(result != RADIOLIB_ERR_WRONG_MODEM);
     
     return false;
@@ -240,11 +246,11 @@ bool SX126xInterface<T>::isActivelyReceiving()
 
     uint16_t irq = lora.getIrqStatus();
     bool hasPreamble = (irq & RADIOLIB_SX126X_IRQ_HEADER_VALID);
-
+    DEBUG_MSG("isActivelyReceiving()=%i\n", irq);
     // this is not correct - often always true - need to add an extra conditional
     // size_t bytesPending = lora.getPacketLength();
 
-    // if (hasPreamble) DEBUG_MSG("rx hasPreamble\n");
+    if (hasPreamble) DEBUG_MSG("rx hasPreamble\n");
     return hasPreamble;
 }
 
@@ -270,7 +276,6 @@ bool SX126xInterface<T>::sleep()
 
     return true;
 }
-
 // Compiler seems upset about template implementations
 // Might need to look into build flags or something
 #include "SX1262Interface.h"

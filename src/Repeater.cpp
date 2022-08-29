@@ -18,7 +18,6 @@ Repeater::Repeater()
 
 void Repeater::init() 
 {
-    initRegion();
 #ifdef SX126X_ANT_SW
     // make analog PA vs not PA switch on SX126x eval board work properly
     pinMode(SX126X_ANT_SW, OUTPUT);
