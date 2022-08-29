@@ -32,6 +32,8 @@
         "type_traits": "cpp",
         "numeric": "cpp",
         "cstddef": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "channel.pb.h": "c",
+        "cmath": "cpp"
     }
 }

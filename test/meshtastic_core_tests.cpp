@@ -1,6 +1,5 @@
 #include <Arduino.h>
 #include "DeviceStore.h"
-#include "mesh/Channels.h"
 #include "mesh/MeshRadio.h"
 #include "mesh/SX1262Interface.h"
 #include <unity.h>

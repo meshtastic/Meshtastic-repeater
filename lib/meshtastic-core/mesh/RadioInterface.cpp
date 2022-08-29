@@ -1,5 +1,4 @@
 #include "RadioInterface.h"
-#include "Channels.h"
 #include "MeshRadio.h"
 #include "DeviceStore.h"
 #include "assert.h"
@@ -100,15 +99,12 @@ const RegionInfo regions[] = {
 
 };
 
-const RegionInfo *myRegion;
+RegionInfo myRegion;
 
 void initRegion()
 {
-    const RegionInfo *r = regions;
-    for (; r->code != Config_LoRaConfig_RegionCode_Unset && r->code != config.lora.region; r++)
-        ;
-    myRegion = r;
-    DEBUG_MSG("Wanted region %d, using %s\n", config.lora.region, r->name);
+    myRegion = regions[config.lora.region];
+    DEBUG_MSG("Wanted region %d, using %s\n", config.lora.region, myRegion.name);
 }
 
 /**
@@ -349,48 +345,57 @@ void RadioInterface::applyModemConfig()
 {
     // Set up default configuration
     // No Sync Words in LORA mode
-    auto channelSettings = channelFile.channels[0].settings;
+
     if (config.lora.spread_factor == 0) {
+        DEBUG_MSG("Using: ");
         switch (config.lora.modem_preset) {
-        case Config_LoRaConfig_ModemPreset_ShortFast:
-            bw = 250;
-            cr = 8;
-            sf = 7;
-            break;
-        case Config_LoRaConfig_ModemPreset_ShortSlow:
-            bw = 250;
-            cr = 8;
-            sf = 8;
-            break;
-        case Config_LoRaConfig_ModemPreset_MedFast:
-            bw = 250;
-            cr = 8;
-            sf = 9;
-            break;
-        case Config_LoRaConfig_ModemPreset_MedSlow:
-            bw = 250;
-            cr = 8;
-            sf = 10;
-            break;
-        case Config_LoRaConfig_ModemPreset_LongFast:
-            bw = 250;
-            cr = 8;
-            sf = 11;
-            break;
-        case Config_LoRaConfig_ModemPreset_LongSlow:
-            bw = 125;
-            cr = 8;
-            sf = 12;
-            break;
-        case Config_LoRaConfig_ModemPreset_VLongSlow:
-            bw = 31.25;
-            cr = 8;
-            sf = 12;
-            break;
-        default:
-            assert(0); // Unknown enum
+            case Config_LoRaConfig_ModemPreset_ShortFast:
+                DEBUG_MSG("ModemPreset_ShortFast\n");
+                bw = 250;
+                cr = 8;
+                sf = 7;
+                break;
+            case Config_LoRaConfig_ModemPreset_ShortSlow:
+                DEBUG_MSG("ModemPreset_ShortSlow\n");
+                bw = 250;
+                cr = 8;
+                sf = 8;
+                break;
+            case Config_LoRaConfig_ModemPreset_MedFast:
+                DEBUG_MSG("ModemPreset_MedFast\n");
+                bw = 250;
+                cr = 8;
+                sf = 9;
+                break;
+            case Config_LoRaConfig_ModemPreset_MedSlow:
+                DEBUG_MSG("ModemPreset_MedSlow\n");
+                bw = 250;
+                cr = 8;
+                sf = 10;
+                break;
+            case Config_LoRaConfig_ModemPreset_LongFast:
+                DEBUG_MSG("ModemPreset_LongFast\n");
+                bw = 250.0;
+                cr = 8;
+                sf = 11;
+                break;
+            case Config_LoRaConfig_ModemPreset_LongSlow:
+                DEBUG_MSG("ModemPreset_LongSlow\n");
+                bw = 125;
+                cr = 8;
+                sf = 12;
+                break;
+            case Config_LoRaConfig_ModemPreset_VLongSlow:
+                DEBUG_MSG("ModemPreset_VLongSlow\n");
+                bw = 31.25;
+                cr = 8;
+                sf = 12;
+                break;
+            default:
+                assert(0); // Unknown enum
         }
     } else {
+        DEBUG_MSG("custom modem configuration\n");
         sf = config.lora.spread_factor;
         cr = config.lora.coding_rate;
         bw = config.lora.bandwidth;
@@ -402,35 +407,38 @@ void RadioInterface::applyModemConfig()
     }
 
     power = config.lora.tx_power;
-    DEBUG_MSG("config.lora.region=%i, sf=%i, cr=%i, bw=%f\n", 
-        config.lora.region, sf, cr, bw);
+    DEBUG_MSG("Region=%i, sf=%i, cr=%i, bw=", config.lora.region, sf, cr);
+    Serial.println(bw);
     // assert(myRegion); // Should have been found in init
-    if ((power == 0) || (power > myRegion->powerLimit))
-        power = myRegion->powerLimit;
+    if ((power == 0) || (power > myRegion.powerLimit))
+        power = myRegion.powerLimit;
 
     if (power == 0)
         power = 17; // Default to default power if we don't have a valid power
     
+    Serial.println(myRegion.freqStart);
+    Serial.println(myRegion.freqEnd);
+    Serial.println(myRegion.spacing);
     // Calculate the number of channels
-    uint32_t numChannels = floor((myRegion->freqEnd - myRegion->freqStart) / (myRegion->spacing + (bw / 1000)));
-
+    uint32_t numChannels = floor((myRegion.freqEnd - myRegion.freqStart) / (myRegion.spacing + (bw / 1000)));
+    DEBUG_MSG("Number of channels available: ");
+    Serial.println(numChannels);
     // If user has manually specified a channel num, then use that, otherwise generate one by hashing the name
-    const char *channelName = channels.getName(channels.getPrimaryIndex());
-    DEBUG_MSG("Channel id=%i, ch_num=%i\n", channelSettings.id, channelSettings.channel_num);
-    int channel_num = channelSettings.channel_num ? channelSettings.channel_num - 1 : hash(channelName) % numChannels;
+    int channel_num = 91;// channel.settings.channel_num ? channel.settings.channel_num - 1 : hash(channel.settings.name) % numChannels;
+    DEBUG_MSG("Channel id=%i, name=%s, channel_num=%i\n", channel.settings.id, channel.settings.name, channel_num);
 
     // Old frequency selection formula
-    // float freq = myRegion->freqStart + ((((myRegion->freqEnd - myRegion->freqStart) / numChannels) / 2) * channel_num);
+    // float freq = myRegion.freqStart + ((((myRegion.freqEnd - myRegion.freqStart) / numChannels) / 2) * channel_num);
 
     // New frequency selection formula
-    float freq = myRegion->freqStart + (bw / 2000) + (channel_num * (bw / 1000));
-
+    float freq = myRegion.freqStart + (bw / 2000) + (channel_num * (bw / 1000));
+    
     saveChannelNum(channel_num);
     saveFreq(freq + config.lora.frequency_offset);
 
-    DEBUG_MSG("Set radio: region=%s, name=%s, config=%u, ch=%d, power=%d\n", myRegion->name, channelName, config.lora.modem_preset, channel_num, power);
-    DEBUG_MSG("Radio myRegion->freqStart / myRegion->freqEnd: %f -> %f (%f mhz)\n", myRegion->freqStart, myRegion->freqEnd, myRegion->freqEnd - myRegion->freqStart);
-    DEBUG_MSG("Radio myRegion->numChannels: %d\n", numChannels);
+    DEBUG_MSG("Set radio: region=%s, name=%s, config=%u, ch=%d, power=%d\n", myRegion.name, channel.settings.name, config.lora.modem_preset, channel_num, power);
+    DEBUG_MSG("Radio myRegion.freqStart / myRegion.freqEnd: %f -> %f (%f mhz)\n", myRegion.freqStart, myRegion.freqEnd, myRegion.freqEnd - myRegion.freqStart);
+    DEBUG_MSG("Radio myRegion.numChannels: %d\n", numChannels);
     DEBUG_MSG("Radio channel_num: %d\n", channel_num);
     DEBUG_MSG("Radio frequency: %f\n", getFreq());
     DEBUG_MSG("Slot time: %u msec\n", slotTimeMsec);
@@ -444,8 +452,8 @@ void RadioInterface::limitPower()
 {
     uint8_t maxPower = 255; // No limit
 
-    if (myRegion->powerLimit)
-        maxPower = myRegion->powerLimit;
+    if (myRegion.powerLimit)
+        maxPower = myRegion.powerLimit;
 
     if (power > maxPower) {
         DEBUG_MSG("Lowering transmit power because of regulatory limits\n");

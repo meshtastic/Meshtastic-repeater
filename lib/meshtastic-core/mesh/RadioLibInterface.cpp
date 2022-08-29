@@ -1,5 +1,4 @@
 #include "RadioLibInterface.h"
-#include "Channels.h"
 #include "MeshTypes.h"
 #include "DeviceStore.h"
 // Repeater shouldn't need exclusive spi lock

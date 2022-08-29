@@ -1,5 +1,4 @@
 #include "Repeater.h"
-#include "mesh/Channels.h"
 #include "DeviceStore.h"
 #include "configuration.h"
 #include "mesh-pb-constants.h"

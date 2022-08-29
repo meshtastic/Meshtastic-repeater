@@ -1,6 +1,5 @@
 #pragma once
 
-#include "mesh/Channels.h"
 #include "mesh/MeshTypes.h"
 #include "mesh/RadioInterface.h"
 

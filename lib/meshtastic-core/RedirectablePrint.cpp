@@ -64,8 +64,8 @@ size_t RedirectablePrint::logDebug(const char *format, ...)
         bool hasNewline = *format && format[strlen(format) - 1] == '\n';
 
         // If we are the first message on a report, include the header
-        if (!isContinuationMessage)
-            r += printf("%u ", millis() / 1000);
+        // if (!isContinuationMessage)
+        //     r += printf("%u ", millis() / 1000);
 
         r += vprintf(format, arg);
         va_end(arg);

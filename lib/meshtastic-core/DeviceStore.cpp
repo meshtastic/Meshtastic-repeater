@@ -1,15 +1,15 @@
 #include "mesh-pb-constants.h"
 #include "configuration.h"
 #include "DeviceStore.h"
-#include "mesh/Channels.h"
 #include "mesh/MeshRadio.h"
 #include "error.h"
 
 DeviceStore deviceStore;
 
 LocalConfig config;
-ChannelFile channelFile;
 DeviceState devicestate;
+
+Channel channel;
 
 /** The current change # for radio settings.  Starts at 0 on boot and any time the radio settings
  * might have changed is incremented.  Allows others to detect they might now be on a new channel.
@@ -23,13 +23,8 @@ void DeviceStore::init() {
     // memset(&devicestate, 0, sizeof(DeviceState));
 
     installDefaultConfig();
-    installDefaultChannels();
-    if (channelFile.channels_count != MAX_NUM_CHANNELS) {
-        DEBUG_MSG("Setting default channel and radio preferences\n");
-        channels.initDefaults();
-        DEBUG_MSG("Channel defaults initialized\n");
-    }
-    channels.onConfigChanged();
+    installDefaultChannel();
+    resetRadioConfig();
 }
 
 void DeviceStore::installDefaultConfig()
@@ -52,19 +47,18 @@ void DeviceStore::installDefaultConfig()
 void DeviceStore::resetRadioConfig() 
 {
     radioGeneration++;
-
-    if (channelFile.channels_count != MAX_NUM_CHANNELS) {
-        DEBUG_MSG("Setting default channel and radio preferences!\n");
-
-        channels.initDefaults();
-    }
-    channels.onConfigChanged();
     initRegion();
 }
 
-void DeviceStore::installDefaultChannels()
+void DeviceStore::installDefaultChannel()
 {
-    memset(&channelFile, 0, sizeof(channelFile));
+    memset(&channel, 0, sizeof(Channel));
+    channel.index = 0;
+    channel.role = Channel_Role_PRIMARY;
+    channel.has_settings = true;
+    strcpy(channel.settings.name, "LongF");
+    // channel.settings.psk = defaultpsk;
+    channel.settings.channel_num = 0;
 }
 
 /// Record an error that should be reported via analytics
